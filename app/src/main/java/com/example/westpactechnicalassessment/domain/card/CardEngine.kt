@@ -11,8 +11,8 @@ class CardEngine @Inject constructor(
     private val messageManager: MessageManager,
 ){
 
-    suspend fun getCreditCards() {
-        messageManager.get("$CREDIT_CARD?$SIZE=$REQUEST_SIZE")?.let { it ->
+    suspend fun getCreditCards(requestSize: Int = REQUEST_SIZE): List<CreditCardInfo>? {
+        return messageManager.get("$CREDIT_CARD?$SIZE=$requestSize")?.let {
             JsonUtils.fromJsonString<List<CreditCardInfo>>(it)
         }
     }

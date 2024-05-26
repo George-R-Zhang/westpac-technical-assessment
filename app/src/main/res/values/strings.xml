@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Westpac technical assessment</string>
+    <string name="no_credit_cards_found">"No credit cards found"</string>
+    <string name="failed_to_load_credit_cards">"Failed to load credit cards info"</string>
 </resources>
