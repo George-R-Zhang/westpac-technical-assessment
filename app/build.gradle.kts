@@ -62,16 +62,21 @@ dependencies {
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.hilt.navigation)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.coroutines)
+
+    //Hilt
+    implementation(libs.androidx.hilt.navigation)
     implementation(libs.hilt)
     kapt(libs.hilt.android.compiler)
+    //Timber
     implementation(libs.timber)
+    //Ktor
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
     implementation(libs.ktor.client.logging)
+    //Serialization
     implementation(libs.serialization.json)
 
     testImplementation(libs.junit)

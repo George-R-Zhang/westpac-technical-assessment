@@ -4,7 +4,6 @@ import com.example.westpactechnicalassessment.domain.card.model.CreditCardInfo
 import com.example.westpactechnicalassessment.domain.msg.MessageManager
 import com.example.westpactechnicalassessment.utility.JsonUtils
 import javax.inject.Inject
-import javax.inject.Singleton
 
 class CardEngine @Inject constructor(
     private val messageManager: MessageManager,
