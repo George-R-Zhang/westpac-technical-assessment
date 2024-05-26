@@ -6,7 +6,6 @@ import com.example.westpactechnicalassessment.utility.JsonUtils
 import javax.inject.Inject
 import javax.inject.Singleton
 
-@Singleton
 class CardEngine @Inject constructor(
     private val messageManager: MessageManager,
 ){
@@ -21,6 +20,6 @@ class CardEngine @Inject constructor(
         private const val CREDIT_CARD = "credit_cards"
         private const val SIZE = "size"
 
-        private const val REQUEST_SIZE = 100
+        private const val REQUEST_SIZE = 20
     }
 }

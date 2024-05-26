@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -12,11 +11,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ElevatedCard
@@ -26,7 +24,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -39,11 +39,17 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.westpactechnicalassessment.R
 import com.example.westpactechnicalassessment.domain.card.model.CreditCardInfo
 import com.example.westpactechnicalassessment.ui.common.LoadingView
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import timber.log.Timber
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CardsScreen(
-    viewModel: CardScreenVM = hiltViewModel()
+fun CreditCardsScreen(
+    viewModel: CreditCardScreenVM = hiltViewModel()
 ) {
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
     Scaffold(
@@ -66,21 +72,22 @@ fun CardsScreen(
                 .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
         ) {
-            CardsScreenView(state)
+            CreditCardsScreenView(state, viewModel::loadMore)
         }
     }
 }
 
 @Composable
-fun CardsScreenView(state: CardScreenState) {
+fun CreditCardsScreenView(state: CreditCardScreenState, loadMore: () -> Unit) {
 
     when (state) {
-        is CardScreenState.Loading -> {
+        is CreditCardScreenState.Loading -> {
             LoadingView()
         }
 
-        is CardScreenState.ShowCards -> {
-            if (state.cards.isEmpty()) {
+        is CreditCardScreenState.ShowCards -> {
+            if(state.isLoading) Timber.d("Currently Loading") else Timber.d("Loading finished")
+            if (state.creditCards.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -91,26 +98,39 @@ fun CardsScreenView(state: CardScreenState) {
                     )
                 }
             } else {
+                val listState = rememberLazyListState()
+                if(state.canLoadMore) {
+                    LaunchedEffect(listState) {
+                        snapshotFlow { listState.layoutInfo.visibleItemsInfo }
+                            .map { visibleItems ->
+                                visibleItems.lastOrNull()?.index ?: -1
+                            }
+                            .distinctUntilChanged()
+                            .collect { lastIndex ->
+                                val totalItems = listState.layoutInfo.totalItemsCount
+                                if (lastIndex == totalItems - 1) {
+                                    loadMore()
+                                }
+                            }
+                    }
+                }
+
                 LazyColumn(
-                    modifier = Modifier
-                        .padding(10.dp),
+                    modifier = Modifier.padding(10.dp),
                     verticalArrangement = Arrangement.spacedBy(20.dp),
-                    state = rememberLazyListState()
+                    state = listState
                 ) {
-                    state.cards.forEach {
+                    items(items = state.creditCards, itemContent = { CreditCard(it) })
+                    if(state.isLoading) {
                         item {
-                            Card(
-                                cardType = it.cardType,
-                                cardNumber = it.cardNumber,
-                                expiryDate = it.expiryDate
-                            )
+                            LoadingView(30.dp)
                         }
                     }
                 }
             }
         }
 
-        is CardScreenState.FailedToLoad -> {
+        is CreditCardScreenState.FailedToLoad -> {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -128,10 +148,8 @@ fun CardsScreenView(state: CardScreenState) {
 }
 
 @Composable
-fun Card(
-    cardType: String,
-    cardNumber: String,
-    expiryDate: String,
+fun CreditCard(
+    creditCardInfo: CreditCardInfo
 ) {
     ElevatedCard(
         modifier = Modifier
@@ -149,17 +167,17 @@ fun Card(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = cardType,
+                text = creditCardInfo.cardType,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.primary
             )
             Text(
-                text = cardNumber,
+                text = creditCardInfo.cardNumber,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.primary
             )
             Text(
-                text = expiryDate,
+                text = creditCardInfo.expiryDate,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -169,9 +187,9 @@ fun Card(
 
 @Composable
 @Preview(showBackground = true)
-fun ShowCardsPreview() {
-    CardsScreenView(
-        CardScreenState.ShowCards(
+fun ShowCreditCardsPreview() {
+    CreditCardsScreenView(
+        CreditCardScreenState.ShowCards(
             listOf(
                 CreditCardInfo(
                     9487,
@@ -182,23 +200,30 @@ fun ShowCardsPreview() {
                 ),
             )
         )
-    )
+    ) {}
 }
 
 @Composable
 @Preview(showBackground = true)
-fun EmptyCardsPreview() {
-    CardsScreenView(CardScreenState.ShowCards(emptyList()))
+fun EmptyCreditCardsPreview() {
+    CreditCardsScreenView(CreditCardScreenState.ShowCards(emptyList())) {}
 }
 
 @Composable
 @Preview(showBackground = true)
 fun LoadingPreview() {
-    CardsScreenView(CardScreenState.Loading)
+    CreditCardsScreenView(CreditCardScreenState.Loading) {}
 }
 
 @Composable
 @Preview
 fun CardViewPreview() {
-    Card("Visa", "1234-5678-9012-3456", "2029-12-31")
+    val creditCardInfo = CreditCardInfo(
+        9487,
+        "479e48f8-b2a6-449a-bc07-8c1df6097d41",
+        "Visa",
+        "1234-5678-9012-3456",
+        "2029-12-31"
+    )
+    CreditCard(creditCardInfo)
 }
