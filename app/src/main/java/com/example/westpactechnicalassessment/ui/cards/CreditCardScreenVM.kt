@@ -2,16 +2,17 @@ package com.example.westpactechnicalassessment.ui.cards
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.westpactechnicalassessment.usecase.IGetCardsUC
+import com.example.westpactechnicalassessment.usecase.IGetCreditCardsUC
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.VisibleForTesting
 import javax.inject.Inject
 
 @HiltViewModel
 class CreditCardScreenVM @Inject constructor(
-    private val getCardsUC: IGetCardsUC,
+    private val getCardsUC: IGetCreditCardsUC,
 ): ViewModel() {
 
     private val _stateFlow = MutableStateFlow<CreditCardScreenState>(CreditCardScreenState.Initial)
@@ -19,10 +20,10 @@ class CreditCardScreenVM @Inject constructor(
 
     init {
         viewModelScope.launch {
-            _stateFlow.emit(CreditCardScreenState.Loading)
+            setState(CreditCardScreenState.Loading)
             getCardsUC()?.let {
-                _stateFlow.emit(CreditCardScreenState.ShowCards(it))
-            } ?: _stateFlow.emit(CreditCardScreenState.FailedToLoad)
+                setState(CreditCardScreenState.ShowCards(it))
+            } ?: setState(CreditCardScreenState.FailedToLoad)
         }
     }
 
@@ -31,11 +32,16 @@ class CreditCardScreenVM @Inject constructor(
         if (currentState !is CreditCardScreenState.ShowCards || currentState.isLoading || !currentState.canLoadMore) return
 
         viewModelScope.launch {
-            _stateFlow.emit(currentState.copy(isLoading = true))
+            setState(currentState.copy(isLoading = true))
             getCardsUC()?.let {
                 val newList = currentState.creditCards + it
-                _stateFlow.emit(CreditCardScreenState.ShowCards(newList, isLoading = false))
-            } ?: _stateFlow.emit(currentState.copy(isLoading = false, canLoadMore = false))
+                setState(CreditCardScreenState.ShowCards(newList, isLoading = false))
+            } ?: setState(currentState.copy(isLoading = false, canLoadMore = false))
         }
+    }
+
+    @VisibleForTesting
+    suspend fun setState(state: CreditCardScreenState) {
+        _stateFlow.emit(state)
     }
 }

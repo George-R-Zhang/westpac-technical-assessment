@@ -18,7 +18,7 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.example.westpactechnicalassessment.CustomTestRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -81,6 +81,11 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    androidTestImplementation(libs.hilt.android.test)
+    kaptTest(libs.hilt.android.compiler)
+    kaptAndroidTest(libs.hilt.android.compiler)
+    androidTestImplementation(libs.mockito.kotlin)
+    androidTestImplementation(libs.mockito.android)
 }
 
 kapt {

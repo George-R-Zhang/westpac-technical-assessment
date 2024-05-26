@@ -4,12 +4,12 @@ import com.example.westpactechnicalassessment.domain.card.CardEngine
 import com.example.westpactechnicalassessment.domain.card.model.CreditCardInfo
 import javax.inject.Inject
 
-interface IGetCardsUC {
+interface IGetCreditCardsUC {
     suspend operator fun invoke(): List<CreditCardInfo>?
 }
 
-class GetCardsUC @Inject constructor(
+class GetCreditCardsUC @Inject constructor(
     private val cardEngine: CardEngine
-): IGetCardsUC {
+): IGetCreditCardsUC {
     override suspend operator fun invoke() = cardEngine.getCreditCards()
 }
